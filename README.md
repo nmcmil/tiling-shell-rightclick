@@ -21,7 +21,7 @@ This daemon runs at the Linux input layer (below Wayland) to:
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/tiling-shell-rightclick.git
+git clone https://github.com/nmcmil/tiling-shell-rightclick.git
 cd tiling-shell-rightclick
 sudo ./install.sh
 ```
