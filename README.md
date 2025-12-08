@@ -35,7 +35,23 @@ sudo ./uninstall.sh
 
 ## Configuration
 
-By default, the daemon simulates the **Super (Meta)** key. Make sure Tiling Shell is configured to use Super as the activation key:
+After installation, look for the **mouse icon** in your system tray, or search for **"Tiling Rightclick Config"** in your application menu.
+
+The GUI lets you:
+- **Select Mouse Device** — Choose which mouse to use (or all devices)
+- **Choose Modifier Key** — Super, Ctrl, or Alt (left/right variants)
+- **Start/Stop/Restart** the service
+- **Show/Hide** the system tray indicator
+
+### Why the Modifier Key Option?
+
+If you've swapped your Super and Ctrl keys (e.g., using GNOME Tweaks for a Mac-like layout), you'll need to change the modifier key to match your setup. The daemon sends raw keycodes, so if your keys are remapped at the system level, you may need to select a different key in the config.
+
+**Example:** If you swapped Super ↔ Ctrl in GNOME Tweaks and Tiling Shell expects Super, try setting the modifier to "Ctrl (Left)" — it will send Ctrl which your system sees as Super.
+
+### Manual Tiling Shell Configuration
+
+Make sure Tiling Shell is configured to use the same activation key:
 
 ```bash
 gsettings --schemadir ~/.local/share/gnome-shell/extensions/tilingshell@ferrarodomenico.com/schemas \
@@ -50,6 +66,8 @@ gsettings --schemadir ~/.local/share/gnome-shell/extensions/tilingshell@ferrarod
 4. **Release Right-Click** to snap the window
 
 ## Service Management
+
+You can control the service from the GUI or via terminal:
 
 ```bash
 # Check status
@@ -80,17 +98,22 @@ This bypasses Wayland's security restrictions because `evdev` operates at the ke
 
 ## Troubleshooting
 
+### Snap not triggering
+
+1. **Check your key mapping** — If you've swapped Super/Ctrl keys in GNOME Tweaks, open the config GUI and try a different modifier key
+2. **Verify Tiling Shell settings** — Make sure Tiling Shell's activation key matches what the daemon sends
+
 ### Mouse stops working
 If the daemon crashes, your mouse may become unresponsive. Reboot to restore normal operation, or use keyboard to run:
 ```bash
 sudo systemctl stop tiling-rightclick.service
 ```
 
-### Snap not triggering
-Make sure Tiling Shell is set to use Super as the activation key (see Configuration above).
-
 ### Permission denied
 The service must run as root to access `/dev/input/` devices.
+
+### System tray indicator not showing
+Make sure you have the [AppIndicator extension](https://extensions.gnome.org/extension/615/appindicator-support/) installed and enabled.
 
 ## License
 
