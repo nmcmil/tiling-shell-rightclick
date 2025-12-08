@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tiling Rightclick Config
+Comment=Configure the Tiling Shell Right-Click Activation Daemon
+Exec=python3 /opt/tiling-rightclick/tiling-rightclick-config.py
+Icon=preferences-desktop
+Terminal=false
+Type=Application
+Categories=Settings;DesktopSettings;GTK;
+Keywords=tiling;window;snap;rightclick;mouse;

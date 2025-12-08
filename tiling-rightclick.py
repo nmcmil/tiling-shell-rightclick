@@ -14,8 +14,25 @@ import selectors
 import sys
 import os
 import time
+import json
 
-def find_mouse_devices():
+CONFIG_PATH = "/etc/tiling-rightclick/config.json"
+
+def load_config():
+    """Load configuration from file."""
+    config = {
+        "device_name": "",  # Empty means all devices
+        "modifier_key": "KEY_LEFTMETA"
+    }
+    try:
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH, 'r') as f:
+                config.update(json.load(f))
+    except (PermissionError, json.JSONDecodeError) as e:
+        print(f"Could not load config, using defaults: {e}")
+    return config
+
+def find_mouse_devices(device_filter=""):
     """Find all mouse devices that support relative movement."""
     devices = []
     for path in evdev.list_devices():
@@ -23,13 +40,25 @@ def find_mouse_devices():
             dev = evdev.InputDevice(path)
             caps = dev.capabilities()
             if e.EV_REL in caps:
+                # If filter is set, only include matching device
+                if device_filter and device_filter not in dev.name:
+                    continue
                 devices.append(dev)
         except (PermissionError, OSError):
             pass
     return devices
 
+
 def main():
-    mice = find_mouse_devices()
+    # Load configuration
+    config = load_config()
+    device_filter = config.get("device_name", "")
+    modifier_key_name = config.get("modifier_key", "KEY_LEFTMETA")
+    modifier_key = getattr(e, modifier_key_name, e.KEY_LEFTMETA)
+    
+    print(f"Configuration: device_filter='{device_filter}', modifier_key={modifier_key_name}")
+    
+    mice = find_mouse_devices(device_filter)
     if not mice:
         print("No mouse devices found!", file=sys.stderr)
         sys.exit(1)
@@ -44,9 +73,8 @@ def main():
         e.EV_MSC: [e.MSC_SCAN],
     }
     
-    # Try to include specific keys from devices if possible, but the basics above cover most mice.
-    # We also need the keyboard key for the shortcut
-    combined_caps[e.EV_KEY].append(e.KEY_LEFTMETA)
+    # Add the configured modifier key to capabilities
+    combined_caps[e.EV_KEY].append(modifier_key)
 
     # Create Virtual Mouse+Keyboard COMBO device
     try:
@@ -102,7 +130,7 @@ def main():
                                     if right_held:
                                         if not super_sent:
                                             # Send Super Down instead of Right Down
-                                            vkbdmouse.write(e.EV_KEY, e.KEY_LEFTMETA, 1)
+                                            vkbdmouse.write(e.EV_KEY, modifier_key, 1)
                                             super_sent = True
                                             print("Proxy: Swapped Right->Super (Active)")
                                     else: # Right released
@@ -118,7 +146,7 @@ def main():
                                             time.sleep(0.05)  # 50ms delay
                                             
                                             # 3. Release SUPER (Deactivate tiling mode)
-                                            vkbdmouse.write(e.EV_KEY, e.KEY_LEFTMETA, 0)
+                                            vkbdmouse.write(e.EV_KEY, modifier_key, 0)
                                             vkbdmouse.syn()
                                             
                                             super_sent = False
@@ -133,7 +161,7 @@ def main():
                                     # BUT if we were sending super, we should probably stop? 
                                     # e.g. User releases left before right.
                                     if super_sent and not right_held: # Released right while super was active
-                                         vkbdmouse.write(e.EV_KEY, e.KEY_LEFTMETA, 0)
+                                         vkbdmouse.write(e.EV_KEY, modifier_key, 0)
                                          super_sent = False
                                     elif not super_sent:
                                          vkbdmouse.write_event(event) # Normal pass through
